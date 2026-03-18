@@ -74,7 +74,7 @@ INDUSTRY_BUYERS = [
     {"id": "BUY-008", "name": "Ambuja Cement",             "sector": "Cement",      "budget_usd": 180000, "demand_tonnes": 7000},
 ]
 
-USD_TO_INR = 83.5
+USD_TO_INR = 92
 
 
 class CarbonCreditEngine:
