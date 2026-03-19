@@ -63,6 +63,7 @@ app.include_router(carbonchain_router)
 # ─── Health check ─────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
+    # Forced reload 2
     return {
         "status"  : "operational",
         "modules" : ["WasteVision", "PlasmaSim", "CCTS SmartMarket"],
