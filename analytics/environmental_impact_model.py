@@ -6,7 +6,7 @@ Ghazipur Landfill Environmental Impact & Heatmap Analysis.
 
 Provides:
   - Radial methane dispersion zones around Ghazipur landfill
-  - Air Quality Index (AQI) estimation from CH4 & particulate emissions
+  - Air Quality Index (AQI) estimation from CH4 &  particulate emissions
   - Population health risk tier mapping across affected wards
   - CO₂-equivalent impact comparison: landfill vs. plasma gasification
   - City-wide avoided emissions summary for Delhi-NCR
