@@ -2,7 +2,7 @@ import base64
 import json
 import os
 
-img_path = r"d:\ATMOSCHAIN\datasets\waste_images_dataset\test\plastic\plastic_00001.jpg"
+img_path = r"D:\ATMOSCHAIN\my_garbage_photo.jpg"
 out_path = r"d:\ATMOSCHAIN\sample_payload.json"
 
 if not os.path.exists(img_path):
@@ -13,7 +13,7 @@ else:
     
     payload = {
         "image_b64": img_b64,
-        "mass_override_kg": 0.5
+        "mass_override_kg": 7.5
     }
     
     with open(out_path, "w", encoding="utf-8") as f:
