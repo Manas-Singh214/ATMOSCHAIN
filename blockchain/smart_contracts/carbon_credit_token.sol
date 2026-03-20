@@ -10,6 +10,8 @@ pragma solidity ^0.8.20;
  *
  * Token: CarbonCreditToken (CCT)
  *
+
+
  * Functions:
  *   mint(address, amount)    — mint new credits (owner only)
  *   retire(amount)           — permanently retire credits (burn)
