@@ -27,6 +27,7 @@ req = urllib.request.Request(
     headers={'Content-Type': 'application/json'}
 )
 
+
 print(f"Sending POST request to {url}...")
 try:
     with urllib.request.urlopen(req) as response:
