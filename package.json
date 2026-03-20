@@ -1,14 +1,12 @@
 {
-  "name": "frontend",
+  "name": "atmoschain",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "predeploy": "npm run build",
-    "deploy": "npx gh-pages -d out -m \"Deploy to GitHub Pages\""
+    "lint": "eslint"
   },
   "dependencies": {
     "@fontsource/fira-mono": "^5.2.7",
