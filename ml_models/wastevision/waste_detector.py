@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL   = "gemini-2.0-flash"
+GEMINI_MODEL   = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 # Waste classes supported by ATMOSCHAIN
 WASTE_CLASSES = [

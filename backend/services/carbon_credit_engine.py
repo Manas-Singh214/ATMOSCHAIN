@@ -86,9 +86,10 @@ class CarbonCreditEngine:
     """
 
     def __init__(self):
-        # Initialize with seeded credits
-        for s in _SEEDED_CREDITS:
-            _marketplace.append(s.copy())
+        # Initialize with seeded credits only if empty
+        if not _marketplace:
+            for s in _SEEDED_CREDITS:
+                _marketplace.append(s.copy())
 
     def mint_credits(
         self,

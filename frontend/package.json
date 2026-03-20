@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predeploy": "npm run build",
+    "deploy": "npx gh-pages -d out -m \"Deploy to GitHub Pages\""
   },
   "dependencies": {
     "@fontsource/fira-mono": "^5.2.7",

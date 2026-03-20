@@ -4,7 +4,7 @@ echo ATMOSCHAIN - Launching Platform
 echo =======================================================
 
 echo Starting FastAPI Backend (Port 8000)...
-start "ATMOSCHAIN Backend" cmd /k "cd /d "%~dp0" && set PYTHONPATH=%~dp0 && uvicorn backend.api.app:app --reload --port 8000"
+start "ATMOSCHAIN Backend" cmd /k "cd /d "%~dp0" && set PYTHONPATH=%~dp0 && python -m uvicorn backend.api.app:app --reload --port 8000"
 
 echo Starting Next.js Frontend (Port 3000)...
 start "ATMOSCHAIN Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"
