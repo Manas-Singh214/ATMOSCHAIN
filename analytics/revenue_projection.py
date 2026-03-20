@@ -8,7 +8,7 @@ Ghazipur landfill waste.
 Models three interconnected revenue streams:
   1. Electricity Export (Grid feed-in from Syngas turbines)
   2. Carbon Credit Sales (CCTS marketplace receipts per minted CCT)
-  3. Slag / Vitrified Aggregate Sales (construction material by-product)
+  3. Slag /  Vitrified Aggregate Sales (construction material by-product)
 
 Also computes:
   - CapEx / OpEx framework for a 500 tonne/day pilot plant
