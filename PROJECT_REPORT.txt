@@ -181,3 +181,609 @@ d:\Projects\ATMOSCHAIN
    -> `cd d:\Projects\ATMOSCHAIN\frontend`
    -> `npm run dev` (Runs on port 3000)
 4. Visit `http://localhost:3000` and enjoy the interconnected experience.
+
+==============================================================================
+7. SUB-PROJECT FILE WORKING REFERENCE
+==============================================================================
+A detailed breakdown of every source file, what it does, its inputs/outputs,
+key constants, and how each fits into the ATMOSCHAIN ecosystem.
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: simulation/  —  PlasmaSim Gas Cleanup Pipeline
+──────────────────────────────────────────────────────────────────────────────
+
+  cyclone_separator_model.py
+  ──────────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Models Stage 1 of gas cleanup: cyclone separator.
+  Removes particulates, slag droplets, and heavy aerosols from hot syngas.
+
+  Class   : CycloneSeparator
+  Input   : raw_gas_pct (dict), input_mass_kg (float)
+  Output  : clean_gas_pct, slag_kg, particulate_ppm, removal_efficiency_pct
+  Physics : 99.2% removal efficiency for particles > 10 µm
+  Conds   : 800 °C / 1.1 bar
+  Notes   : Centrifugal force vitrifies and drops slag. Output feeds Stage 2.
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  gas_scrubber_model.py
+  ─────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Models Stage 2: wet gas scrubber.
+  Removes acid gases (HCl, H2S), sulfur compounds, heavy metals, and dioxins.
+  Uses NaOH or Ca(OH)2 scrubbing solution.
+
+  Class   : GasScrubber
+  Input   : input_gas_pct (dict — from cyclone output)
+  Output  : clean_gas_pct, sulfur_removed_ppm, hcl_removed_ppm,
+            post_scrubber_levels, eu_emission_standard compliance status
+  Removes : SO2 (99.9%), HCl (99.5%), dioxins (99.97%), heavy metals (99%)
+  Conds   : 400 °C / 1.05 bar
+  Notes   : Checks dioxin level against EU WtE standard (0.1 ng/Nm3 limit).
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  fractionation_tower_model.py
+  ────────────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Models Stage 3: cryogenic fractionation / pressure swing adsorption (PSA).
+  Separates syngas into individual product streams:
+  H2, CO, CO2, CH4 — each with high purity for industrial use.
+
+  Class   : FractionationTower
+  Input   : input_gas_pct (dict — from scrubber output)
+  Output  : fractionated_gas_pct, product_streams (per-gas purity, recovery %)
+  Method  : Pressure Swing Adsorption (PSA) + cryogenic distillation
+  Purity  : H2=99.9%, CO=98.5%, CO2=99.0%, CH4=97.0%
+  Conds   : -180 °C / 3.0 bar (cryogenic)
+  Notes   : H2 stream routed to fuel cells. CO for Fischer-Tropsch synthesis.
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  gas_separation_pipeline.py
+  ──────────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Orchestrates all gas separation stages:
+    Cyclone → Scrubber → Fractionation Tower
+  Provides per-stage removal efficiency and output purity data.
+
+  Class   : GasSeparationPipeline
+  Input   : raw_gas_pct (dict), input_mass_kg (float)
+  Output  : stage_1_cyclone, stage_2_scrubber, stage_3_fractionation,
+            final_gas_pct, pipeline_summary (key metrics dict)
+  Depends : CycloneSeparator, GasScrubber, FractionationTower
+  Run     : python simulation/gas_separation_pipeline.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  plasma_reactor_sim.py
+  ─────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Full plasma gasification reactor simulation. Models the state machine:
+    WASTE_INPUT → PLASMA_ARC → THERMAL_CRACKING → CYCLONE_SEPARATION
+    → GAS_SCRUBBING → FRACTIONATION → GAS_UTILIZATION
+
+  Integrates gas_yield_predictor and energy_prediction to produce a complete
+  per-stage simulation result for the frontend pipeline animation.
+
+  Class   : PlasmaReactorSim
+  Input   : waste_class (str), mass_kg (float)
+  Output  : stages[] (7 per-stage dicts), gas_composition, gas_utilization,
+            energy (kWh + revenue), slag (mass + use), summary (dashboard cards)
+  Depends : GasYieldPredictor, EnergyPredictor
+  Run     : python simulation/plasma_reactor_sim.py
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: ml_models/plasmasim_models/  —  PlasmaSim ML Predictors
+──────────────────────────────────────────────────────────────────────────────
+
+  gas_yield_predictor.py
+  ──────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Predicts gas composition fractions and slag yield from plasma gasification
+  of detected waste types. Based on empirical literature data from WtE
+  plasma arc gasification plants (WTERT, Environment Canada 2013).
+
+  Class   : GasYieldPredictor
+  Input   : waste_class (str), mass_kg (float)
+  Output  : gas_composition_pct {H2,CO,CO2,CH4,N2,Other}, gas_volumes_nm3,
+            syngas_total_nm3, syngas_energy_mj, slag_mass_kg
+  Key DB  : GAS_COMPOSITION_DB — empirical % fractions at 5000 °C per waste type
+  Bonus   : get_gas_utilization_plan() — per-gas industrial use + energy (kWh)
+  Run     : python ml_models/plasmasim_models/gas_yield_predictor.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  energy_prediction.py
+  ────────────────────
+  ATMOSCHAIN — PlasmaSim Optimizer
+  Predicts electricity output from plasma gasification using waste type,
+  mass, and gas composition data. Accounts for parasitic load of the plasma arc.
+
+  Class   : EnergyPredictor
+  Input   : waste_class (str), mass_kg (float)
+  Output  : electricity_kwh, heat_kwh, total_energy_kwh, revenue_usd,
+            revenue_inr, homes_powered_month, co2_avoided_kg
+  Key DB  : NET_KWH_PER_TONNE — from InEnTec / Solena / Alter NRG plant data
+  Bonus   : daily_plant_scenario() — 100 t/day Delhi MSW plant projection
+  Run     : python ml_models/plasmasim_models/energy_prediction.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  train_plasmasim_model.py
+  ────────────────────────
+  ATMOSCHAIN — PlasmaSim Models
+  Trains scikit-learn models for plasma gasification outputs.
+  Generates 4,000 synthetic samples with ±8% noise from physics-based tables.
+
+  Trains TWO MultiOutputRegressor(GradientBoostingRegressor) pipelines:
+    energy_model.pkl  — predicts electricity_kwh, heat_kwh, syngas_nm3
+    gas_model.pkl     — predicts H2%, CO%, CO2%, CH4%, N2%, Other%
+
+  Features: waste_type (OHE), mass_kg, plasma_temp_c, moisture_percent
+  Run     : python ml_models/plasmasim_models/train_plasmasim_model.py
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: ml_models/methane_model/  —  Methane Prediction
+──────────────────────────────────────────────────────────────────────────────
+
+  methane_prediction.py
+  ─────────────────────
+  ATMOSCHAIN — WasteVision AI
+  IPCC First-Order Decay (FOD) methane model for landfill gas estimation.
+  Reference: IPCC 2006 Guidelines for National GHG Inventories, Vol. 5, Ch. 3
+
+  IPCC Formula:
+    CH4 (tonnes) = mass_tonnes × DOC × DOCf × F × MCF × (16/12)
+    CO2e = CH4_tonnes × GWP100  (GWP100 = 28, IPCC AR6)
+
+  Class   : MethanePredictor
+  Input   : waste_class (str), mass_kg (float), doc_override (optional)
+  Output  : ch4_kg, ch4_cubic_meters, co2e_kg, co2e_tonnes, carbon_credits,
+            revenue_usd_min/mid/max, revenue_inr_mid, gwp_factor
+  Bonus   : predict_landfill_daily() — aggregate for full landfill mix
+            ghazipur_scenario()      — Ghazipur 2,800 t/day real scenario
+  Run     : python ml_models/methane_model/methane_prediction.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  train_methane_model.py
+  ──────────────────────
+  ATMOSCHAIN — Methane Model
+  Trains a scikit-learn Random Forest Regressor on methane_historical.csv
+  to predict CH4 yield from waste properties.
+
+  Trains TWO RandomForestRegressor pipelines:
+    ch4_predictor.pkl   — predicts ch4_yield_kg
+    co2e_predictor.pkl  — predicts co2e_yield_kg
+
+  Features: waste_type, mass_kg, doc_fraction, temperature_c,
+            moisture_percent, mass_x_doc (engineered), log_mass (engineered)
+  Notes   : Zero-yield materials (plastic/metal/glass) are handled by the
+            physics model; this RF only trains on organic materials.
+  Run     : python ml_models/methane_model/train_methane_model.py
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: ml_models/wastevision/  —  WasteVision AI (Computer Vision)
+──────────────────────────────────────────────────────────────────────────────
+
+  waste_detector.py
+  ─────────────────
+  ATMOSCHAIN — WasteVision AI
+  Uses Google Gemini 2.0 Flash (Vision) to classify waste objects from
+  a webcam frame. Returns waste class, confidence, and estimated mass.
+
+  Class   : WasteDetector
+  Input   : base64-encoded JPEG string (from webcam)
+  Output  : waste_class, confidence, item_description,
+            estimated_volume_liters, estimated_mass_kg,
+            material_notes, biodegradable, recyclable, hazardous,
+            gas_release_composition, doc_value
+  Method  : Sends image + structured prompt to Gemini 2.0 Flash Vision API.
+            Mass = volume × density[waste_class]
+  Classes : plastic, organic, paper, metal, glass, inert, mixed, textile, unknown
+  Run     : python ml_models/wastevision/waste_detector.py <image_path>
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  dataset_loader.py
+  ─────────────────
+  ATMOSCHAIN — WasteVision AI
+  PyTorch Dataset and DataLoader wrappers for the waste_images_dataset.
+  Supports train/val/test splits, data augmentation (train only),
+  class-to-index mapping, and optional oversampling for imbalanced datasets.
+
+  Key fn  : get_dataloaders(batch_size, num_workers, weighted_sampling)
+  Augment : RandomCrop, RandomHorizontalFlip, ColorJitter, RandomRotation (train)
+  Norm    : ImageNet mean/std (compatible with torchvision pretrained weights)
+  Sampler : WeightedRandomSampler to balance under-represented classes
+  Run     : python ml_models/wastevision/dataset_loader.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  train_classifier.py
+  ───────────────────
+  ATMOSCHAIN — WasteVision AI
+  Trains a ResNet-18 image classifier on waste_images_dataset using
+  transfer learning. Saves best checkpoint as wastevision_classifier.pth.
+
+  Phase 1 (5 epochs)  : Backbone frozen — only custom FC head trained (LR 1e-3)
+  Phase 2 (15 epochs) : Full fine-tune with AdamW + CosineAnnealingLR (LR 1e-4)
+  Stopping : Early stopping (patience = 5 epochs on val accuracy)
+  Output   : wastevision_classifier.pth + per-class confusion matrix
+  Run      : python ml_models/wastevision/train_classifier.py
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: backend/api/  —  FastAPI REST + WebSocket Server
+──────────────────────────────────────────────────────────────────────────────
+
+  app.py
+  ──────
+  ATMOSCHAIN — FastAPI Backend
+  Main FastAPI application entry point.
+  Configures CORS, mounts all route modules, and provides WebSocket hub
+  for live webcam streaming.
+
+  Routers  : wastevision_router, plasmasim_router, carbonchain_router
+  CORS     : Allows localhost:3000 (Next.js dev server)
+  WebSocket: /ws/live — accepts base64 JPEG frames, returns detection +
+             methane result JSON in real time
+  Health   : GET /health  /  GET / (route map)
+  Run      : uvicorn backend.api.app:app --reload --port 8000
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  plasmasim_routes.py
+  ───────────────────
+  ATMOSCHAIN — FastAPI Backend
+  Routes for plasma gasification simulation.
+
+  POST /api/simulate      — Run full plasma simulation (waste_class, mass_kg,
+                            optional scale_factor). Returns 7 stages + summary.
+  GET  /api/gas-types     — All supported waste types with gas profiles + kWh/t
+  GET  /api/plant-scenario— 100 t/day Delhi MSW plant energy scenario
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  wastevision_routes.py
+  ─────────────────────
+  ATMOSCHAIN — FastAPI Backend
+  Routes for waste detection, methane calculation, and heatmap data.
+
+  POST /api/detect   — Classify waste from base64 webcam image.
+                       Returns: waste_class, mass, methane, CO2e, carbon credits.
+  GET  /api/heatmap  — Ghazipur/Delhi landfill heat zone data (NASA MODIS).
+                       Includes 8 GPS zones with AQI bands + plantation recs.
+  GET  /api/landfill — Ghazipur daily emission scenario (2,800 t/day).
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  carbonchain_routes.py
+  ─────────────────────
+  ATMOSCHAIN — FastAPI Backend
+  Routes for carbon credit minting, marketplace, and trading.
+
+  POST /api/mint         — Mint credits from detection + methane data
+  GET  /api/market       — Marketplace listings, industry buyers, market stats
+  POST /api/buy          — Execute a carbon credit trade
+  GET  /api/ledger       — All minted CCT records
+  GET  /api/transactions — Full trade history
+  GET  /api/impact       — Aggregated environmental impact summary
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: backend/services/  —  Business Logic Services
+──────────────────────────────────────────────────────────────────────────────
+
+  carbon_credit_engine.py
+  ───────────────────────
+  ATMOSCHAIN — Backend Services
+  Manages carbon credit ledger, minting, and marketplace.
+  Uses an in-memory ledger (simulates blockchain behavior for demo).
+
+  Class   : CarbonCreditEngine
+  Ledger  : In-memory list of all minted CCT records
+  Seeded  : 4 real-world baseline projects pre-loaded in marketplace
+            (Aravalli Reforestation, Rajasthan Solar, Ghazipur Methane, Delhi Metro)
+  Buyers  : 8 pre-configured industry buyers (IndiGo, Tata Steel, Reliance, NTPC…)
+  Methods :
+    mint_credits(detection, methane, address) → token_id, credits, tx_hash
+    get_marketplace()      → listings + buyers + market stats
+    execute_trade(id, buyer, qty) → confirmed transaction record
+    get_impact_summary()   → total CO2e, trees equivalent, cars off road
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  methane_engine.py
+  ─────────────────
+  ATMOSCHAIN — Backend Services
+  Service wrapper around MethanePredictor for use by FastAPI routes.
+
+  Functions:
+    calculate_methane_impact(waste_class, mass_kg) → full methane + credit dict
+    calculate_from_detection(detection_result)     → combined detection + methane
+    get_ghazipur_landfill_stats()                  → Ghazipur daily scenario
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  energy_estimator.py
+  ───────────────────
+  ATMOSCHAIN — Backend Services
+  Service wrapper around EnergyPredictor for use by API routes.
+  Also provides combined simulation result aggregation.
+
+  Functions:
+    estimate_energy(waste_class, mass_kg)                → per-item electricity + heat
+    estimate_plant_energy(waste_composition, t_per_day)  → daily plant-level projection
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: blockchain/smart_contracts/  —  On-Chain ERC-20 Token
+──────────────────────────────────────────────────────────────────────────────
+
+  carbon_credit_token.sol
+  ───────────────────────
+  ATMOSCHAIN — CCTS SmartMarket
+  ERC-20 token representing 1 Carbon Credit = 1 tonne of CO2e avoided.
+  Minted by the ATMOSCHAIN platform when waste is converted/avoided.
+
+  Token   : CarbonCreditToken (CCT)
+  Standard: ERC-20 (OpenZeppelin) + Ownable
+  Struct  : CreditRecord { source, co2e_grams, timestamp, minter }
+
+  Functions:
+    mint(recipient, amount, source, co2e_grams) — owner-only; records metadata
+    retire(amount, reason)   — burns credits; updates totalRetired; emits event
+    getCreditRecord(index)   — read immutable on-chain mint record
+    circulatingSupply()      — totalSupply() (minted minus retired)
+  Events  : CreditsMinted, CreditsRetired — full on-chain audit trail
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: analytics/  —  Environmental Impact & Financial Modeling
+──────────────────────────────────────────────────────────────────────────────
+
+  environmental_impact_model.py
+  ─────────────────────────────
+  ATMOSCHAIN — Analytics Module
+  Ghazipur Landfill Environmental Impact & Heatmap Analysis.
+
+  Class   : EnvironmentalImpactModel
+  Data    : CPCB SWM Report 2023, IPCC AR6, EDMC Ghazipur 2024, WHO AQI
+  Methods :
+    emission_baseline()       → daily + annual CH4/CO2e from open dumping (IPCC FOD)
+    radial_heatmap()          → PM2.5 + AQI band at 0.5–10 km radii (Gaussian dispersion)
+    ward_exposure_analysis()  → per-ward PM2.5, AQI, population at-risk (6 wards)
+    plasma_vs_landfill_delta()→ CH4 avoided, electricity generated vs. landfill status quo
+    ten_year_projection()     → 10-yr CO2e avoided + revenue at 3% waste growth CAGR
+    full_report()             → combined dict of all the above
+  Run     : python analytics/environmental_impact_model.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  revenue_projection.py
+  ─────────────────────
+  ATMOSCHAIN — Analytics Module
+  Financial modeling for a Plasma Gasification + CCTS plant processing
+  Ghazipur landfill waste (500 t/day pilot plant).
+
+  Revenue streams modeled:
+    1. Electricity Export — kWh × grid tariff Rs 8.5/kWh (CERC India 2024)
+    2. Carbon Credit Sales  — CO2e × price (Bear $10 / Base $20 / Bull $35)
+    3. Slag / Aggregate Sales — vitrified by-product @ $15/tonne
+    4. Tipping Fees — gate fee @ $8/tonne from municipalities
+
+  CapEx   : $113M total (plasma reactors, gas cleaning, turbines, civil, IT)
+  OpEx    : $13M/year (labour, parasitic power, maintenance, consumables)
+
+  Class   : RevenueProjModel
+  Methods :
+    annual_revenue()          → revenue breakdown by stream + % share
+    physical_summary()        → waste processed, electricity, slag, CO2e avoided
+    capex_opex_summary()      → full CapEx/OpEx breakdown + EBITDA margin
+    investment_metrics()      → NPV, IRR, simple payback (10% WACC discount)
+    scenario_comparison()     → Bear/Base/Bull carbon price comparison table
+    cumulative_pl_projection()→ 20-year P&L with OpEx inflation + waste growth
+    full_report()             → combined dict of all the above
+  Run     : python analytics/revenue_projection.py
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: datasets/  —  Training Data Generation
+──────────────────────────────────────────────────────────────────────────────
+
+  generate_datasets.py
+  ────────────────────
+  ATMOSCHAIN — Dataset Generator
+  Master script that generates and validates all three ATMOSCHAIN datasets.
+
+  Dataset 1: waste_images_dataset/
+    900 synthetic 224×224 JPEGs across 6 waste classes
+    (plastic, organic, paper, metal, glass, cardboard)
+    Splits: train=70%, val=20%, test=10% (105/30/15 per class)
+    Visually distinct per-class colour + random noise + object rectangle.
+
+  Dataset 2: methane_generation_data/methane_historical.csv
+    2,000 rows based on IPCC FOD formula with ±5% measurement noise.
+    Columns: sample_id, waste_type, mass_kg, doc_fraction, temperature_c,
+             moisture_percent, ch4_yield_kg, co2e_yield_kg
+
+  Dataset 3: landfill_emission_data/indian_landfills_daily.csv
+    2+ years of daily data for 6 Indian landfills:
+    Ghazipur (Delhi), Bhalswa (Delhi), Okhla (Delhi),
+    Deonar (Mumbai), Pirana (Ahmedabad), Perungudi (Chennai)
+    Columns: date, landfill_name, city, msw_received_tonnes,
+             organic_fraction, ch4_emitted_tonnes, ambient_temp, sensor_status
+
+  Run: python datasets/generate_datasets.py
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  fix_image_dataset.py
+  ────────────────────
+  ATMOSCHAIN — Dataset Utility
+  Validates, detects corrupt/missing image files in waste_images_dataset/,
+  and re-generates them. Run this if the ResNet-18 classifier fails to load
+  images during training.
+
+──────────────────────────────────────────────────────────────────────────────
+MODULE: frontend/src/  —  Next.js TypeScript App
+──────────────────────────────────────────────────────────────────────────────
+
+  app/layout.tsx
+  ─────────────
+  Root layout. Wraps all pages with LayoutClient which renders the
+  persistent 3D background scene and the navigation bar on all routes.
+
+  app/page.tsx
+  ────────────
+  Home / Landing page.
+  Interactive 3D scene hub with links to the three sub-modules:
+  WasteVision, PlasmaSim, and CCTS.
+
+  app/wastevision/page.tsx
+  ────────────────────────
+  WasteVision AI page.
+  Webcam feed + real-time waste detection dashboard.
+  Displays: waste class, confidence, mass, methane potential, CO2e,
+  carbon credits, biodegradability, recyclability, hazardous flag.
+  Calls: POST /api/detect
+
+  app/plasmasim/page.tsx
+  ──────────────────────
+  PlasmaSim Optimizer page.
+  Waste type selector + mass input → 7-stage pipeline animation.
+  Displays per-stage: temperature, pressure, description, and outputs.
+  Calls: POST /api/simulate
+
+  app/ccts/page.tsx
+  ─────────────────
+  CCTS SmartMarket page.
+  Carbon credit marketplace with: minted credits, industry buyers, live
+  trade execution, ledger view, and environmental impact summary.
+  Calls: GET /api/market, POST /api/mint, POST /api/buy, GET /api/impact
+
+  components/LayoutClient.tsx
+  ───────────────────────────
+  Client-side layout wrapper. Renders the persistent 3D scene as a
+  full-screen background and places navigation + page content on top.
+
+  components/Navigation.tsx
+  ─────────────────────────
+  Glassmorphism top navigation bar.
+  Links to WasteVision, PlasmaSim, and CCTS pages.
+
+  components/digital-twin/Scene.tsx
+  ──────────────────────────────────
+  React Three Fiber scene root. Composes PlasmaCore, ScannerBed, and
+  LedgerChain 3D models. Handles lighting, camera, and animation loop.
+
+  components/digital-twin/PlasmaCore.tsx
+  ───────────────────────────────────────
+  3D animated plasma reactor model — glowing core visual used as the
+  hero element in the landing page background scene.
+
+  components/digital-twin/ScannerBed.tsx
+  ───────────────────────────────────────
+  3D scanning bed animation representing the WasteVision detection
+  process in the background scene.
+
+  components/digital-twin/LedgerChain.tsx
+  ────────────────────────────────────────
+  3D blockchain ledger chain animation representing CCTS token minting
+  in the background scene.
+
+  components/digital-twin/HUD.tsx
+  ────────────────────────────────
+  Data Heads-Up Display overlay. Renders real-time sensor readings, gas
+  composition bars, energy metrics, and stage indicators on top of the
+  3D scene.
+
+  components/digital-twin/WebcamDetector.tsx
+  ───────────────────────────────────────────
+  React component that captures webcam frames, converts them to base64
+  JPEG, and streams them to the backend via WebSocket (/ws/live).
+  Displays detection results in real time as they arrive.
+
+==============================================================================
+8. CONTINUOUS DATA FLOW & ECOSYSTEM LIFECYCLE
+==============================================================================
+The true power of ATMOSCHAIN lies not in isolated models, but in the seamless 
+continuous data flow across the entire architecture. Here is how folders and files
+work together to create a cohesive lifecycle:
+
+1. DATA INGESTION (Frontend -> WasteVision AI)
+   - Flow: `frontend/components/digital-twin/WebcamDetector.tsx` captures live frames 
+     and sends base64 streams via WebSockets to `backend/api/app.py`.
+   - Function: Acts as the physical-to-digital bridge. Real-world physical objects 
+     (waste) enter the digital system here.
+
+2. CLASSIFICATION & YIELD PREDICTION (WasteVision -> Methane Engine)
+   - Flow: `backend/api/wastevision_routes.py` routes the image to `ml_models/wastevision/waste_detector.py`.
+     Once identified (e.g., Organic Waste), data flows to `ml_models/methane_model/methane_prediction.py`.
+   - Function: Transforms raw pixels into actionable scientific metrics (Mass, DOC 
+     fraction, CH4 emission potential). It quantifies the problem.
+
+3. DIGITAL DESTRUCTION (Methane Engine -> PlasmaSim Optimizer)
+   - Flow: The quantified waste payload is handed to `backend/api/plasmasim_routes.py`, 
+     which triggers `simulation/plasma_reactor_sim.py`. 
+   - Function: Instead of a physical landfill, the waste is virtually destroyed. 
+     The simulation files (`cyclone_separator_model.py`, `gas_scrubber_model.py`, etc.) 
+     process the payload step-by-step, transforming hazard metrics into clean 
+     energy metrics (Syngas, Electricity) using `ml_models/plasmasim_models/`.
+
+4. VALUE CREATION (PlasmaSim -> CCTS Blockchain)
+   - Flow: The net positive impact (CO2e avoided) is pushed to `backend/services/carbon_credit_engine.py`, 
+     which interfaces with `blockchain/smart_contracts/carbon_credit_token.sol`.
+   - Function: Transforms the physical act of recycling/destruction into a fungible 
+     financial asset (Carbon Credit Token). Data becomes currency.
+
+5. FEEDBACK & MACRO-ANALYSIS (CCTS -> Analytics)
+   - Flow: System-wide processing rates and credits are regularly aggregated by 
+     `analytics/environmental_impact_model.py` and `revenue_projection.py`.
+   - Function: Feeds the generated data into long-term projection models to adjust 
+     plant ROI calculations and update city-wide heatmaps.
+
+This pipeline ensures that every single module depends on the successful execution 
+of the previous one. The continuous flow turns an image of a plastic bottle into 
+a mathematically validated carbon credit within milliseconds.
+
+==============================================================================
+9. UI STRATEGY & VISUAL REPRESENTATION NEEDS
+==============================================================================
+To make the deep technical complexity of Machine Learning, Thermodynamics, and 
+Blockchain accessible to regular users, investors, and policymakers, the UI 
+must serve as an interactive "Digital Twin" of the entire process.
+
+A. Representing Machine Learning (WasteVision AI)
+   - Need: Users need to trust that the AI isn't just randomly guessing.
+   - UI Strategy: Real-time bounding boxes on a webcam overlay (`WebcamDetector.tsx`). 
+     When an item is scanned, the UI must immediately display a "Material Breakdown" 
+     (e.g., 80% Organic, 20% Plastic) and show a live calculation of its Methane 
+     Potential (kg CH4). It grounds abstract AI in immediate physical reality.
+
+B. Representing Thermodynamics (PlasmaSim)
+   - Need: Gasification is an invisible, microscopic process occurring at 5000°C. 
+     A simple text output of "Energy Generated" is not convincing.
+   - UI Strategy: A step-by-step interactive 3D pipeline (`plasma_reactor_sim.py` 
+     mapped to `components/digital-twin/PlasmaCore.tsx`). The UI must visually 
+     transport the scanning result into a glowing reactor, showing real-time 
+     sensory data (Temperature: 5500°C, Slag dropping, Syngas rising) and 
+     gradually filling a "Clean Energy" battery meter. 
+
+C. Representing Blockchain (CCTS SmartMarket)
+   - Need: Blockchain ledgers are inherently opaque strings of hex characters.
+   - UI Strategy: A "Minting" animation (`LedgerChain.tsx`) that visually converts 
+     the virtual syngas into glowing tokens. The marketplace dashboard (`ccts/page.tsx`) 
+     should resemble a modern stock exchange, showing live bids from simulated 
+     industries (e.g., Airlines buying credits) so the user feels they are participating 
+     in a live, breathing economy rather than just looking at a database table.
+
+D. Representing Analytics (Macro Impact)
+   - Need: Translating micro-actions (scanning one bottle) to macro-impact (city health).
+   - UI Strategy: An interactive city heatmap. As more simulated waste is destroyed in 
+     the app, the red "danger zones" around the virtual Ghazipur landfill should 
+     visibly shrink and cool down (transition to green), mapped via `analytics/environmental_impact_model.py`.
+     This provides a dopamine-driven feedback loop, proving to the user that 
+     their actions are healing the environment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    END OF ATMOSCHAIN PROJECT REPORT v1.0.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
