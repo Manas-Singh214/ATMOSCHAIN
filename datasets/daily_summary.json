@@ -1,0 +1,9 @@
+[
+  { "date": "2026-03-20", "total_waste_kg": 28.4,  "methane_produced_kg": 1.83,  "energy_kwh": 25.44,  "credits_generated": 0.05124, "co2_avoided_kg": 5.033 },
+  { "date": "2026-03-21", "total_waste_kg": 31.2,  "methane_produced_kg": 2.01,  "energy_kwh": 27.94,  "credits_generated": 0.05628, "co2_avoided_kg": 5.528 },
+  { "date": "2026-03-22", "total_waste_kg": 19.8,  "methane_produced_kg": 1.27,  "energy_kwh": 17.65,  "credits_generated": 0.03556, "co2_avoided_kg": 3.493 },
+  { "date": "2026-03-23", "total_waste_kg": 42.1,  "methane_produced_kg": 2.76,  "energy_kwh": 38.36,  "credits_generated": 0.07728, "co2_avoided_kg": 7.590 },
+  { "date": "2026-03-24", "total_waste_kg": 35.5,  "methane_produced_kg": 2.30,  "energy_kwh": 31.97,  "credits_generated": 0.0644,  "co2_avoided_kg": 6.325 },
+  { "date": "2026-03-25", "total_waste_kg": 27.0,  "methane_produced_kg": 1.62,  "energy_kwh": 22.52,  "credits_generated": 0.04536, "co2_avoided_kg": 4.455 },
+  { "date": "2026-03-26", "total_waste_kg": 50.3,  "methane_produced_kg": 3.35,  "energy_kwh": 46.57,  "credits_generated": 0.0938,  "co2_avoided_kg": 9.213 }
+]

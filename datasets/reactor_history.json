@@ -1,0 +1,10 @@
+[
+  { "id": "RX-001", "timestamp": "2026-03-20T08:00:00Z", "methane_kg": 0.42, "duration_s": 5, "energy_kwh": 5.838, "carbon_credits": 0.01176, "co2_avoided_kg": 1.155, "efficiency_pct": 91.2 },
+  { "id": "RX-002", "timestamp": "2026-03-20T10:30:00Z", "methane_kg": 0.81, "duration_s": 5, "energy_kwh": 11.259, "carbon_credits": 0.02268, "co2_avoided_kg": 2.2275, "efficiency_pct": 93.5 },
+  { "id": "RX-003", "timestamp": "2026-03-20T12:15:00Z", "methane_kg": 1.20, "duration_s": 5, "energy_kwh": 16.68,  "carbon_credits": 0.0336,  "co2_avoided_kg": 3.3,    "efficiency_pct": 94.1 },
+  { "id": "RX-004", "timestamp": "2026-03-21T09:00:00Z", "methane_kg": 0.63, "duration_s": 5, "energy_kwh": 8.757,  "carbon_credits": 0.01764, "co2_avoided_kg": 1.7325, "efficiency_pct": 89.7 },
+  { "id": "RX-005", "timestamp": "2026-03-21T14:45:00Z", "methane_kg": 0.55, "duration_s": 5, "energy_kwh": 7.645,  "carbon_credits": 0.0154,  "co2_avoided_kg": 1.5125, "efficiency_pct": 92.0 },
+  { "id": "RX-006", "timestamp": "2026-03-22T07:30:00Z", "methane_kg": 1.80, "duration_s": 5, "energy_kwh": 25.02,  "carbon_credits": 0.0504,  "co2_avoided_kg": 4.95,   "efficiency_pct": 96.3 },
+  { "id": "RX-007", "timestamp": "2026-03-22T11:00:00Z", "methane_kg": 0.38, "duration_s": 5, "energy_kwh": 5.282,  "carbon_credits": 0.01064, "co2_avoided_kg": 1.045,  "efficiency_pct": 88.5 },
+  { "id": "RX-008", "timestamp": "2026-03-23T08:45:00Z", "methane_kg": 2.10, "duration_s": 5, "energy_kwh": 29.19,  "carbon_credits": 0.0588,  "co2_avoided_kg": 5.775,  "efficiency_pct": 95.8 }
+]

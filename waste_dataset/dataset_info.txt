@@ -1,0 +1,41 @@
+======================================================================
+  ATMOSCHAIN — RealWaste Annotated Image Dataset  v1.0
+======================================================================
+
+SOURCE  : realwaste-main/RealWaste/
+LICENSE : CC BY-NC-SA 4.0
+GWP CH4 : 28 (IPCC AR6 GWP100)
+
+TOTAL IMAGES  : 4752
+CATEGORIES    : 9
+GRAND CH4     : 41.9801 kg
+GRAND CO2e    : 1175.4428 kg
+GRAND ENERGY  : 583.5234 kWh
+
+----------------------------------------------------------------------
+Category                Images  Mass(kg)   Factor   CH4(kg)   CO2e(kg)       kWh
+----------------------------------------------------------------------
+Cardboard                  461     0.500    0.080   18.4400   516.3200  256.3160
+Food Organics              411     0.200    0.138   11.3436   317.6208  157.6760
+Glass                      420     0.300    0.000    0.0000     0.0000    0.0000
+Metal                      790     0.400    0.000    0.0000     0.0000    0.0000
+Miscellaneous Trash        495     0.150    0.030    2.2275    62.3700   30.9623
+Paper                      500     0.050    0.075    1.8750    52.5000   26.0625
+Plastic                    921     0.020    0.000    0.0000     0.0000    0.0000
+Textile Trash              318     0.150    0.060    2.8620    80.1360   39.7818
+Vegetation                 436     0.300    0.040    5.2320   146.4960   72.7248
+----------------------------------------------------------------------
+
+FILES
+  dataset.csv    — row per image with all computed fields
+  metadata.json  — full schema, category summaries, methodology
+  dataset_info.txt — this file
+
+HOW METRICS ARE COMPUTED
+  ch4_kg         = estimated_mass_kg × methane_factor
+  co2e_kg        = ch4_kg × 28  (IPCC GWP100)
+  energy_kwh     = ch4_kg × 13.9  (plasma reactor conversion)
+  carbon_credits = co2e_kg / 1000  (1 credit = 1 tonne CO2e)
+
+NOTE: Methane factors from IPCC First-Order Decay (FOD) model.
+Plastic & Glass & Metal produce ZERO methane (non-biodegradable).

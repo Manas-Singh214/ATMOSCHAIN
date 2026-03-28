@@ -1,0 +1,8 @@
+[
+  { "waste_type": "food_waste", "description": "Organic kitchen and restaurant waste", "doc_fraction": 0.15, "weight_kg_per_unit": 0.2, "methane_factor": 0.3, "degradation_rate_yr": 0.185, "half_life_yrs": 3.7 },
+  { "waste_type": "paper",      "description": "Newspapers, cardboard, office paper",  "doc_fraction": 0.40, "weight_kg_per_unit": 0.05, "methane_factor": 0.08, "degradation_rate_yr": 0.06, "half_life_yrs": 11.6 },
+  { "waste_type": "plastic",    "description": "PET, HDPE, LDPE packaging",           "doc_fraction": 0.00, "weight_kg_per_unit": 0.02, "methane_factor": 0.0,  "degradation_rate_yr": 0.0,  "half_life_yrs": null },
+  { "waste_type": "wood",       "description": "Timber scraps, furniture waste",      "doc_fraction": 0.50, "weight_kg_per_unit": 0.8,  "methane_factor": 0.12, "degradation_rate_yr": 0.025, "half_life_yrs": 27.7 },
+  { "waste_type": "textiles",   "description": "Clothing, fabric scraps",            "doc_fraction": 0.20, "weight_kg_per_unit": 0.15, "methane_factor": 0.06, "degradation_rate_yr": 0.04,  "half_life_yrs": 17.3 },
+  { "waste_type": "garden",     "description": "Leaves, grass, garden trimmings",    "doc_fraction": 0.20, "weight_kg_per_unit": 0.3,  "methane_factor": 0.25, "degradation_rate_yr": 0.185, "half_life_yrs": 3.7 }
+]
